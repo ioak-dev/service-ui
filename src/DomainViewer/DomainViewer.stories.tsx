@@ -1,7 +1,7 @@
 import { Meta, StoryObj } from '@storybook/react';
 import React, { useState } from "react";
 import DomainViewer, { DomainViewerProps } from '.';
-import { ACCESS_TOKEN } from '../lib/LocalTestingService';
+import { ACCESS_TOKEN } from '../service/LocalTestingService';
 
 const meta: Meta<typeof DomainViewer> = {
   title: "Composite/DomainViewer",

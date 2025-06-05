@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Input, SvgIcon, Button, ButtonVariantType, ThemeType } from 'basicui';
 // import Topbar from "basicui/components/AppShellReveal/Topbar";
 import { List, SearchBar } from "powerui";
-import { DomainService } from "../lib/DomainService";
+import { DomainService } from "../service/DomainService";
 import { SpecDefinition } from "powerui/types/DynamicFormTypes";
 
 export type DomainListProps = {
