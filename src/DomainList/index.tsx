@@ -3,13 +3,15 @@ import { Input, SvgIcon, Button, ButtonVariantType, ThemeType } from 'basicui';
 // import Topbar from "basicui/components/AppShellReveal/Topbar";
 import { List, SearchBar } from "powerui";
 import { DomainService } from "../lib/DomainService";
+import { SpecDefinition } from "powerui/types/DynamicFormTypes";
 
 export type DomainListProps = {
     apiBaseUrl: string;
     space: string;
     domain: string;
     authorization: { isAuth: boolean, access_token: string };
-    showSearch: boolean;
+    showSearch?: boolean;
+    constraintFilters?: Record<string, any>;
 };
 
 /**
@@ -17,33 +19,32 @@ export type DomainListProps = {
  */
 const DomainList = (props: DomainListProps) => {
 
+    const [specDefinition, setSpecDefinition] = useState<SpecDefinition>();
     const [data, setData] = useState<any[]>([]);
 
     const [isOpen, setIsOpen] = useState(false);
 
     useEffect(() => {
         if (props.authorization.isAuth) {
+            DomainService.getMeta(props.apiBaseUrl, props.space, props.domain, props.authorization).then((response) => {
+                const _data: SpecDefinition = response;
+                setSpecDefinition(_data);
+                console.log(_data)
+            });
+
             console.log(props.authorization)
             handleSearch();
         }
-    }, [props.authorization])
+    }, [props.authorization, props.constraintFilters])
 
 
     const handleSearch = (event?: any) => {
         DomainService.search(props.apiBaseUrl, props.space, props.domain, {
-            page: 1, limit: 10
+            filters: props.constraintFilters,
+            pagination: { page: 1, limit: 10 }
         }, props.authorization).then((response) => {
             const _data: any[] = response.data;
-            setData(_data.map(item => ({
-                id: item.reference,
-                title: item.name,
-                summary: item.description || "",
-                labels: item.labels?.map((labelItem: any) => ({
-                    id: labelItem,
-                    value: labelItem
-                })),
-                createdAt: item.createdAt
-            })));
+            setData(_data);
         });
     }
 
@@ -60,11 +61,17 @@ const DomainList = (props: DomainListProps) => {
     return (
         <>
             <div className="serviceui-domainlist">
+                <h4>{specDefinition?.displayOptions?.list?.header?.title}</h4>
+                <p>{specDefinition?.displayOptions?.list?.header?.subtitle}</p>
                 {props.showSearch && <div>
                     <SearchBar onSearch={handleSearch} filters={filters} />
                 </div>}
                 <div>
-                    <List data={data}
+                    {specDefinition && <List
+                        data={data}
+                        specDefinition={specDefinition}
+                        showSelectOnRight
+                        showCollapse
                         actions={
                             {
                                 multiSelect: [
@@ -87,7 +94,7 @@ const DomainList = (props: DomainListProps) => {
                                 ]
                             }
                         }
-                        onClick={handleClick} onSelect={handleSelect} selectedItems={selectedItems} />
+                        onClick={handleClick} onSelect={handleSelect} selectedItems={selectedItems} />}
                 </div>
             </div>
             {/* <CreatePopup space={props.space} isOpen={isOpen} onClose={() => setIsOpen(false)} /> */}

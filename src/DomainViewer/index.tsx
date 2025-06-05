@@ -4,6 +4,7 @@ import { Input, SvgIcon, Button, ButtonVariantType, ThemeType } from 'basicui';
 import { DynamicForm, List, SearchBar } from "powerui";
 import { DomainService } from "../lib/DomainService";
 import { DynamicFormHandle, SpecDefinition } from "powerui/types/DynamicFormTypes";
+import DomainList from "../DomainList";
 
 export type DomainViewerProps = {
     apiBaseUrl: string;
@@ -38,6 +39,10 @@ const DomainViewer = (props: DomainViewerProps) => {
             });
         }
     }, [props.authorization]);
+
+    useEffect(() => {
+        console.log(specDefinition);
+    }, [specDefinition])
 
     const [saving, setSaving] = useState(false);
 
@@ -82,6 +87,21 @@ const DomainViewer = (props: DomainViewerProps) => {
                         ref={submitActionRef}
                     />}
                 </div>
+                {specDefinition?.meta?.children && <div>
+                    {specDefinition?.meta?.children?.map(child => (
+                        <div>
+                            <DomainList
+                                apiBaseUrl={props.apiBaseUrl}
+                                authorization={props.authorization}
+                                domain={child.domain}
+                                space={props.space}
+                                constraintFilters={{
+                                    [child.field.child]: data[child.field.parent]
+                                }}
+                            />
+                        </div>
+                    ))}
+                </div>}
             </div>
             {/* <CreatePopup space={props.space} isOpen={isOpen} onClose={() => setIsOpen(false)} /> */}
         </>
