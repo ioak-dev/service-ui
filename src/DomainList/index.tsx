@@ -21,6 +21,7 @@ const DomainList = (props: DomainListProps) => {
 
     const [specDefinition, setSpecDefinition] = useState<SpecDefinition>();
     const [data, setData] = useState<any[]>([]);
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
     const [isOpen, setIsOpen] = useState(false);
 
@@ -52,9 +53,16 @@ const DomainList = (props: DomainListProps) => {
 
     const handleClick = () => { }
 
-    const handleSelect = () => { }
-
-    const selectedItems: string[] = [];
+    const handleSelect = (event: any) => {
+        const { name, checked } = event.currentTarget;
+        setSelectedItems(prev => {
+            if (checked) {
+                return prev.includes(name) ? prev : [...prev, name];
+            } else {
+                return prev.filter(item => item !== name);
+            }
+        });
+    }
 
     const filters: any[] = [];
 
@@ -70,13 +78,13 @@ const DomainList = (props: DomainListProps) => {
                     {specDefinition && <List
                         data={data}
                         specDefinition={specDefinition}
-                        showSelectOnRight
+                        showSelectOnRight={specDefinition.displayOptions?.list.options?.showSelectOnRight}
                         showCollapse
                         actions={
                             {
                                 multiSelect: [
                                     <Button onClick={handleDelete} theme={ThemeType.danger}>
-                                        FA Delete
+                                        FA Delete ({selectedItems.length})
                                     </Button>
                                 ],
                                 singleSelect: [
