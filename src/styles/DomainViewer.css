@@ -1,7 +1,4 @@
 .serviceui-domainviewer__main {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    column-gap: 10px;
 }
 .serviceui-domainviewer__main__actions {
     display: grid;

@@ -7,10 +7,21 @@ import {
 } from "./RestTemplate";
 
 const API_PREFIX = "/resources";
+const UI_API_PREFIX = "/resources-ui";
 
 const buildEndpoint = (baseUrl: string, space: string, domain: string, id?: string) => {
     let base = `${baseUrl}${API_PREFIX}/${space}/${domain}`;
     return id ? `${base}/${id}` : base;
+};
+
+const buildUiApiEndpoint = (baseUrl: string, space: string, domain: string, formName?: string) => {
+    let base = `${baseUrl}${UI_API_PREFIX}/${space}/${domain}`;
+    return formName ? `${base}/${formName}` : base;
+};
+
+const buildGenerateApiEndpoint = (baseUrl: string, space: string, domain: string, reference: string, generationName: string) => {
+    let base = `${baseUrl}${API_PREFIX}/${space}/${domain}/${reference}/generate/${generationName}`;
+    return base;
 };
 
 const buildHeaders = (authorization: { access_token: string }) => ({
@@ -34,6 +45,25 @@ export const DomainService = {
     ) => {
 
         const endpoint = `${buildEndpoint(baseUrl, space, domain)}`;
+
+        try {
+            const res = await httpGet(endpoint, buildHeaders(authorization));
+            return res.data;
+        } catch (err) {
+            handleError("GET", endpoint, err);
+            return {};
+        }
+    },
+
+    getForm: async (
+        baseUrl: string,
+        space: string,
+        domain: string,
+        authorization: { access_token: string },
+        formName?: string
+    ) => {
+
+        const endpoint = `${buildUiApiEndpoint(baseUrl, space, domain, formName)}`;
 
         try {
             const res = await httpGet(endpoint, buildHeaders(authorization));
@@ -151,6 +181,26 @@ export const DomainService = {
         } catch (err) {
             handleError("DELETE", endpoint, err);
             return { success: false };
+        }
+    },
+
+    generate: async (
+        baseUrl: string,
+        space: string,
+        domain: string,
+        reference: string,
+        generationName: string,
+        payload: any,
+        authorization: { access_token: string }
+    ) => {
+        const endpoint = buildGenerateApiEndpoint(baseUrl, space, domain, reference, generationName);
+
+        try {
+            const res = await httpPost(endpoint, payload, buildHeaders(authorization));
+            return res.data;
+        } catch (err) {
+            handleError("POST", endpoint, err);
+            return null;
         }
     },
 
