@@ -37,7 +37,6 @@ const DomainViewer = (props: DomainViewerProps) => {
         dataRef.current = data;
     }, [data]);
 
-
     const onActionClick = async (actionSchema: FormAction, payload: Record<string, string | number>) => {
         const response = await Service.onActionClick(
             props.apiBaseUrl,
@@ -149,7 +148,23 @@ const DomainViewer = (props: DomainViewerProps) => {
                         />}
                     </div>
                 </div>
-                {specDefinition?.meta?.children && <div>
+                {formSchema?.children && <div>
+                    {formSchema?.children?.map(child => (
+                        <div>
+                            <DomainList
+                                apiBaseUrl={props.apiBaseUrl}
+                                authorization={props.authorization}
+                                domain={child.domain}
+                                space={props.space}
+                                constraintFilters={{
+                                    [child.field.child]: data[child.field.parent]
+                                }}
+                                schema={child.listSchema}
+                            />
+                        </div>
+                    ))}
+                </div>}
+                {/* {specDefinition?.meta?.children && <div>
                     {specDefinition?.meta?.children?.map(child => (
                         <div>
                             <DomainList
@@ -163,7 +178,7 @@ const DomainViewer = (props: DomainViewerProps) => {
                             />
                         </div>
                     ))}
-                </div>}
+                </div>} */}
             </div>
             {/* <CreatePopup space={props.space} isOpen={isOpen} onClose={() => setIsOpen(false)} /> */}
         </>

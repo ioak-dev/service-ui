@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Input, SvgIcon, Button, ButtonVariantType, ThemeType } from 'basicui';
 // import Topbar from "basicui/components/AppShellReveal/Topbar";
-import { List, SearchBar } from "powerui";
+import { ConversationalFormTypes, List, SearchBar } from "powerui";
 import { DomainService } from "../service/DomainService";
 import { SpecDefinition } from "powerui/types/DynamicFormTypes";
+import { ListSchema } from "powerui/types/uispec.types";
 
 export type DomainListProps = {
     apiBaseUrl: string;
@@ -12,6 +13,7 @@ export type DomainListProps = {
     authorization: { isAuth: boolean, access_token: string };
     showSearch?: boolean;
     constraintFilters?: Record<string, any>;
+    schema: ListSchema;
 };
 
 /**
@@ -66,6 +68,8 @@ const DomainList = (props: DomainListProps) => {
 
     const filters: any[] = [];
 
+    const [checkedItems, setCheckedItems] = useState<string[]>([]);
+
     return (
         <>
             <div className="serviceui-domainlist">
@@ -75,34 +79,35 @@ const DomainList = (props: DomainListProps) => {
                     <SearchBar onSearch={handleSearch} filters={filters} />
                 </div>}
                 <div>
-                    {specDefinition && <List
+                    {props.schema && <List
+                        checkedItems={checkedItems}
+                        setCheckedItems={setCheckedItems}
                         data={data}
-                        specDefinition={specDefinition}
-                        showSelectOnRight={specDefinition.displayOptions?.list.options?.showSelectOnRight}
-                        showCollapse
-                        actions={
-                            {
-                                multiSelect: [
-                                    <Button onClick={handleDelete} theme={ThemeType.danger}>
-                                        FA Delete ({selectedItems.length})
-                                    </Button>
-                                ],
-                                singleSelect: [
-                                    <Button onClick={() => { }} theme={ThemeType.primary}>
-                                        FA Edit
-                                    </Button>,
-                                    <Button onClick={handleDelete} theme={ThemeType.danger}>
-                                        FA Delete
-                                    </Button>
-                                ],
-                                noneSelect: [
-                                    <Button onClick={() => setIsOpen(true)} theme={ThemeType.primary}>
-                                        FA Create new
-                                    </Button>
-                                ]
-                            }
-                        }
-                        onClick={handleClick} onSelect={handleSelect} selectedItems={selectedItems} />}
+                        listSchema={props.schema}
+                    // actions={
+                    //     {
+                    //         multiSelect: [
+                    //             <Button onClick={handleDelete} theme={ThemeType.danger}>
+                    //                 FA Delete ({selectedItems.length})
+                    //             </Button>
+                    //         ],
+                    //         singleSelect: [
+                    //             <Button onClick={() => { }} theme={ThemeType.primary}>
+                    //                 FA Edit
+                    //             </Button>,
+                    //             <Button onClick={handleDelete} theme={ThemeType.danger}>
+                    //                 FA Delete
+                    //             </Button>
+                    //         ],
+                    //         noneSelect: [
+                    //             <Button onClick={() => setIsOpen(true)} theme={ThemeType.primary}>
+                    //                 FA Create new
+                    //             </Button>
+                    //         ]
+                    //     }
+                    // }
+                    // onClick={handleClick} onSelect={handleSelect} selectedItems={selectedItems} 
+                    />}
                 </div>
             </div>
             {/* <CreatePopup space={props.space} isOpen={isOpen} onClose={() => setIsOpen(false)} /> */}
