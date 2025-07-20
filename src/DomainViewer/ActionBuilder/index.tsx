@@ -4,6 +4,7 @@ import SaveAction from "./SaveAction";
 import { FormAction } from "powerui/types/uispec.types";
 import ResetAction from "./ResetAction";
 import GenerateAction from "./GenerateAction";
+import DeleteAction from "./DeleteAction";
 
 export type ActionBuilderProps = {
   actionSchema: FormAction;
@@ -11,12 +12,10 @@ export type ActionBuilderProps = {
 }
 
 export const composeActions = (
-  formSchema: ConversationalFormTypes.FormSchema,
+  actions: FormAction[] = [],
   onClick: (actionSchema: FormAction, payload: Record<string, string | number>) => Promise<void>
 ): ReactNode[] => {
   const _actions: ReactNode[] = [];
-
-  const actions = formSchema.header?.actions ?? [];
 
   for (const action of actions) {
     switch (action.type) {
@@ -25,6 +24,9 @@ export const composeActions = (
         break;
       case "reset":
         _actions.push(<ResetAction key={action.label} actionSchema={action} onClick={onClick} />);
+        break;
+      case "delete":
+        _actions.push(<DeleteAction key={action.label} actionSchema={action} onClick={onClick} />);
         break;
       case "generate":
         _actions.push(<GenerateAction key={action.label} actionSchema={action} onClick={onClick} />);

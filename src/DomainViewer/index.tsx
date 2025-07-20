@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, ReactNode } from "react";
-import { Input, SvgIcon, Button, ButtonVariantType, ThemeType, IconButton } from 'basicui';
 import { ConversationalFormTypes, ConversationalForm } from "powerui";
 import { DomainService } from "../service/DomainService";
 import DomainList from "../DomainList";
@@ -7,6 +6,7 @@ import { composeActions } from "./ActionBuilder";
 import * as Service from "./service";
 import { FormAction } from "powerui/types/uispec.types";
 import { SpecDefinition } from "powerui/types/DynamicFormTypes";
+import "./style.css";
 
 export type DomainViewerProps = {
     apiBaseUrl: string;
@@ -54,6 +54,9 @@ const DomainViewer = (props: DomainViewerProps) => {
                 break;
             case "reset":
                 setState({ ...dataRef.current });
+                break;
+            case "generate":
+                refreshData();
         }
     }
 
@@ -62,7 +65,7 @@ const DomainViewer = (props: DomainViewerProps) => {
             DomainService.getForm(props.apiBaseUrl, props.space, props.domain, props.authorization).then((response) => {
                 const _data: ConversationalFormTypes.FormSchema = response;
                 setActions(composeActions(
-                    _data,
+                    _data.header?.actions,
                     onActionClick
                 ));
                 setFormSchema(_data);
@@ -72,11 +75,8 @@ const DomainViewer = (props: DomainViewerProps) => {
                 setSpecDefinition(response);
             })
 
-            DomainService.getById(props.apiBaseUrl, props.space, props.domain, props.reference, props.authorization).then((response) => {
-                const _data: any = response;
-                setState(_data);
-                setData(_data);
-            });
+            refreshData();
+
         }
     }, [props.authorization]);
 
@@ -87,18 +87,12 @@ const DomainViewer = (props: DomainViewerProps) => {
         setState(e);
     }
 
-    const onSave = () => {
-        setSaving(true);
-        DomainService.update(props.apiBaseUrl, props.space, props.domain, props.reference, state, props.authorization).then((response) => {
-            setState(response);
-            setData(response);
-            setSaving(false);
-            setEditMode(false);
-        })
-    }
-
-    const onReset = () => {
-        setState(data);
+    const refreshData = () => {
+        DomainService.getById(props.apiBaseUrl, props.space, props.domain, props.reference, props.authorization).then((response) => {
+            const _data: any = response;
+            setState(_data);
+            setData(_data);
+        });
     }
 
     const getValue = (
@@ -129,15 +123,13 @@ const DomainViewer = (props: DomainViewerProps) => {
         return result != null ? String(result) : undefined;
     };
 
-
-
     return (
         <>
             <div className="serviceui-domainviewer">
                 <div className="serviceui-domainviewer__main">
                     {formSchema?.header && <header>
                         <h2>{getValue(formSchema?.header.title, data)}</h2>
-                        <p>{getValue(formSchema?.header.subtitle, data)}</p>
+                        {formSchema?.header.subtitle && <p>{getValue(formSchema?.header.subtitle, data)}</p>}
                     </header>}
                     <div>
                         {formSchema && <ConversationalForm
@@ -159,28 +151,14 @@ const DomainViewer = (props: DomainViewerProps) => {
                                 constraintFilters={{
                                     [child.field.child]: data[child.field.parent]
                                 }}
+                                parentDomain={props.domain}
+                                parentReference={props.reference}
                                 schema={child.listSchema}
                             />
                         </div>
                     ))}
                 </div>}
-                {/* {specDefinition?.meta?.children && <div>
-                    {specDefinition?.meta?.children?.map(child => (
-                        <div>
-                            <DomainList
-                                apiBaseUrl={props.apiBaseUrl}
-                                authorization={props.authorization}
-                                domain={child.domain}
-                                space={props.space}
-                                constraintFilters={{
-                                    [child.field.child]: data[child.field.parent]
-                                }}
-                            />
-                        </div>
-                    ))}
-                </div>} */}
             </div>
-            {/* <CreatePopup space={props.space} isOpen={isOpen} onClose={() => setIsOpen(false)} /> */}
         </>
     );
 };

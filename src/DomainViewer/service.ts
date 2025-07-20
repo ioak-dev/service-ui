@@ -46,13 +46,14 @@ export const onActionClick = async (
                     break;
                 }
                 response = await DomainService.generate(
-                    apiBaseUrl,
-                    space,
-                    domain,
-                    reference,
-                    actionSchema.generation?.id,
-                    payload,
-                    authorization
+                    {
+                        baseUrl: apiBaseUrl,
+                        authorization,
+                        generationId: actionSchema.generation?.id,
+                        space: space,
+                        reference,
+                        payload
+                    }
                 );
                 break;
 

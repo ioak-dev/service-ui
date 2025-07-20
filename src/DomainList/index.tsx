@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ReactNode, useRef } from "react";
 import { Input, SvgIcon, Button, ButtonVariantType, ThemeType } from 'basicui';
 // import Topbar from "basicui/components/AppShellReveal/Topbar";
 import { ConversationalFormTypes, List, SearchBar } from "powerui";
 import { DomainService } from "../service/DomainService";
 import { SpecDefinition } from "powerui/types/DynamicFormTypes";
-import { ListSchema } from "powerui/types/uispec.types";
+import { FormAction, ListSchema } from "powerui/types/uispec.types";
+import { composeActions } from "../DomainViewer/ActionBuilder";
+import * as Service from './service';
 
 export type DomainListProps = {
     apiBaseUrl: string;
@@ -14,6 +16,8 @@ export type DomainListProps = {
     showSearch?: boolean;
     constraintFilters?: Record<string, any>;
     schema: ListSchema;
+    parentDomain?: string;
+    parentReference?: string;
 };
 
 /**
@@ -23,9 +27,44 @@ const DomainList = (props: DomainListProps) => {
 
     const [specDefinition, setSpecDefinition] = useState<SpecDefinition>();
     const [data, setData] = useState<any[]>([]);
-    const [selectedItems, setSelectedItems] = useState<string[]>([]);
+    const [checkedItems, setCheckedItems] = useState<string[]>([]);
+    const checkedItemsRef = useRef<string[]>([]);
 
-    const [isOpen, setIsOpen] = useState(false);
+    useEffect(() => {
+        checkedItemsRef.current = checkedItems;
+    }, [checkedItems]);
+
+    const [actions, setActions] = useState<{ noneSelect: ReactNode[], singleSelect: ReactNode[], multiSelect: ReactNode[] }>({
+        noneSelect: [], singleSelect: [], multiSelect: []
+    });
+
+    const onActionClick = async (actionSchema: FormAction, payload: Record<string, string | number>) => {
+        const response = await Service.onActionClick(
+            props.apiBaseUrl,
+            props.space,
+            props.domain,
+            checkedItemsRef.current,
+            props.parentDomain,
+            props.parentReference,
+            props.authorization,
+            actionSchema,
+            payload);
+        console.log(response);
+        setCheckedItems([]);
+        handleSearch();
+        switch (actionSchema.type) {
+            case "delete":
+            case "generate":
+                break;
+        }
+    }
+
+    useEffect(() => {
+        const noneSelect = composeActions(props.schema.header?.actionMap?.noneSelect, onActionClick);
+        const singleSelect = composeActions(props.schema.header?.actionMap?.singleSelect, onActionClick);
+        const multiSelect = composeActions(props.schema.header?.actionMap?.multiSelect, onActionClick);
+        setActions({ noneSelect, singleSelect, multiSelect });
+    }, [props.schema])
 
     useEffect(() => {
         if (props.authorization.isAuth) {
@@ -51,67 +90,25 @@ const DomainList = (props: DomainListProps) => {
         });
     }
 
-    const handleDelete = () => { }
-
     const handleClick = () => { }
-
-    const handleSelect = (event: any) => {
-        const { name, checked } = event.currentTarget;
-        setSelectedItems(prev => {
-            if (checked) {
-                return prev.includes(name) ? prev : [...prev, name];
-            } else {
-                return prev.filter(item => item !== name);
-            }
-        });
-    }
 
     const filters: any[] = [];
 
-    const [checkedItems, setCheckedItems] = useState<string[]>([]);
-
     return (
-        <>
-            <div className="serviceui-domainlist">
-                <h4>{specDefinition?.displayOptions?.list?.header?.title}</h4>
-                <p>{specDefinition?.displayOptions?.list?.header?.subtitle}</p>
-                {props.showSearch && <div>
-                    <SearchBar onSearch={handleSearch} filters={filters} />
-                </div>}
-                <div>
-                    {props.schema && <List
-                        checkedItems={checkedItems}
-                        setCheckedItems={setCheckedItems}
-                        data={data}
-                        listSchema={props.schema}
-                    // actions={
-                    //     {
-                    //         multiSelect: [
-                    //             <Button onClick={handleDelete} theme={ThemeType.danger}>
-                    //                 FA Delete ({selectedItems.length})
-                    //             </Button>
-                    //         ],
-                    //         singleSelect: [
-                    //             <Button onClick={() => { }} theme={ThemeType.primary}>
-                    //                 FA Edit
-                    //             </Button>,
-                    //             <Button onClick={handleDelete} theme={ThemeType.danger}>
-                    //                 FA Delete
-                    //             </Button>
-                    //         ],
-                    //         noneSelect: [
-                    //             <Button onClick={() => setIsOpen(true)} theme={ThemeType.primary}>
-                    //                 FA Create new
-                    //             </Button>
-                    //         ]
-                    //     }
-                    // }
-                    // onClick={handleClick} onSelect={handleSelect} selectedItems={selectedItems} 
-                    />}
-                </div>
+        <div className="serviceui-domainlist">
+            {props.showSearch && <div>
+                <SearchBar onSearch={handleSearch} filters={filters} />
+            </div>}
+            <div>
+                {props.schema && <List
+                    checkedItems={checkedItems}
+                    setCheckedItems={setCheckedItems}
+                    data={data}
+                    listSchema={props.schema}
+                    actions={actions}
+                />}
             </div>
-            {/* <CreatePopup space={props.space} isOpen={isOpen} onClose={() => setIsOpen(false)} /> */}
-        </>
+        </div>
     );
 };
 

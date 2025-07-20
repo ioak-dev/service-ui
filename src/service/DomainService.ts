@@ -8,6 +8,7 @@ import {
 
 const API_PREFIX = "/resources";
 const UI_API_PREFIX = "/resources-ui";
+const AI_API_PREFIX = "/resources-ai";
 
 const buildEndpoint = (baseUrl: string, space: string, domain: string, id?: string) => {
     let base = `${baseUrl}${API_PREFIX}/${space}/${domain}`;
@@ -19,8 +20,20 @@ const buildUiApiEndpoint = (baseUrl: string, space: string, domain: string, form
     return formName ? `${base}/${formName}` : base;
 };
 
-const buildGenerateApiEndpoint = (baseUrl: string, space: string, domain: string, reference: string, generationName: string) => {
-    let base = `${baseUrl}${API_PREFIX}/${space}/${domain}/${reference}/generate/${generationName}`;
+const buildAiApiEndpoint = (
+    baseUrl: string,
+    space: string,
+    generationId: string,
+    reference?: string,
+    parentReference?: string
+) => {
+    let base = `${baseUrl}${AI_API_PREFIX}/${space}/generate/${generationId}?`;
+    if (reference) {
+        base += `reference=${reference}&`;
+    }
+    if (parentReference) {
+        base += `parentReference=${parentReference}`;
+    }
     return base;
 };
 
@@ -184,19 +197,20 @@ export const DomainService = {
         }
     },
 
-    generate: async (
+    generate: async (params: {
         baseUrl: string,
         space: string,
-        domain: string,
-        reference: string,
-        generationName: string,
+        generationId: string,
+        reference?: string,
+        parentReference?: string,
         payload: any,
         authorization: { access_token: string }
+    }
     ) => {
-        const endpoint = buildGenerateApiEndpoint(baseUrl, space, domain, reference, generationName);
+        const endpoint = buildAiApiEndpoint(params.baseUrl, params.space, params.generationId, params.reference, params.parentReference)
 
         try {
-            const res = await httpPost(endpoint, payload, buildHeaders(authorization));
+            const res = await httpPost(endpoint, params.payload, buildHeaders(params.authorization));
             return res.data;
         } catch (err) {
             handleError("POST", endpoint, err);
