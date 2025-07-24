@@ -1,6 +1,48 @@
 import { FormAction } from "powerui/types/uispec.types";
 import { DomainService } from "../service/DomainService";
 
+export const onDelete = async (
+    apiBaseUrl: string,
+    space: string,
+    domain: string,
+    reference: string,
+    authorization: { isAuth: boolean, access_token: string }) => {
+    const response = await DomainService.delete(
+        apiBaseUrl,
+        space,
+        domain,
+        reference,
+        authorization
+    );
+    console.log(`Deleted ${reference}:`, response);
+    return response;
+}
+
+export const onGenerate = async (
+    apiBaseUrl: string,
+    space: string,
+    schema: FormAction,
+    reference: string,
+    parentReference: string | undefined,
+    payload: Record<string, string | number>,
+    authorization: { isAuth: boolean, access_token: string }) => {
+
+    if (!schema.generation?.id) {
+        console.warn("Generation id not specified");
+    }
+    const response = await DomainService.generate({
+        baseUrl: apiBaseUrl,
+        space,
+        reference,
+        parentReference,
+        generationId: schema.generation?.id || "",
+        payload,
+        authorization
+    });
+    console.log(`Generated for ${reference}:`, response);
+    return response;
+}
+
 export const onActionClick = async (
     apiBaseUrl: string,
     space: string,
@@ -35,17 +77,6 @@ export const onActionClick = async (
             try {
                 let response;
                 switch (actionSchema.type) {
-                    case "delete":
-                        response = await DomainService.delete(
-                            apiBaseUrl,
-                            space,
-                            domain,
-                            reference,
-                            authorization
-                        );
-                        console.log(`Deleted ${reference}:`, response);
-                        break;
-
                     case "generate":
                         if (!actionSchema.generation?.id) {
                             console.warn("Generation id not specified");

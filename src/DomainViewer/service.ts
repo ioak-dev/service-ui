@@ -11,7 +11,6 @@ export const onActionClick = async (
     payload: Record<string, string | number>,
     state: Record<string, any>
 ) => {
-    console.log(state);
     try {
         let response;
         switch (actionSchema.type) {
