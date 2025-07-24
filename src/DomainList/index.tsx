@@ -43,7 +43,6 @@ const DomainList = (props: DomainListProps) => {
             props.authorization,
             actionSchema,
             payload);
-        console.log(response);
         setCheckedItems([]);
         handleSearch();
         switch (actionSchema.type) {
