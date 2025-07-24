@@ -38,7 +38,6 @@ const DomainList = (props: DomainListProps) => {
             props.space,
             props.domain,
             checkedItemsRef.current,
-            props.parentDomain,
             props.parentReference,
             props.authorization,
             actionSchema,

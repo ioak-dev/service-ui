@@ -48,7 +48,6 @@ export const onActionClick = async (
     space: string,
     domain: string,
     references: string[],
-    parentDomain: string | undefined,
     parentReference: string | undefined,
     authorization: { isAuth: boolean, access_token: string },
     actionSchema: FormAction,
