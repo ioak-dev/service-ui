@@ -10,9 +10,19 @@ const API_PREFIX = "/resources";
 const UI_API_PREFIX = "/resources-ui";
 const AI_API_PREFIX = "/resources-ai";
 
-const buildEndpoint = (baseUrl: string, space: string, domain: string, id?: string) => {
+const buildEndpoint = (baseUrl: string, space: string, domain: string, reference?: string) => {
     let base = `${baseUrl}${API_PREFIX}/${space}/${domain}`;
-    return id ? `${base}/${id}` : base;
+    return reference ? `${base}/${reference}` : base;
+};
+
+const buildVersionEndpoint = (baseUrl: string, space: string, domain: string, reference: string) => {
+    let base = buildEndpoint(baseUrl, space, domain, reference);
+    return `${base}/version`
+};
+
+const buildGetByIdEndpoint = (baseUrl: string, space: string, domain: string, reference: string, version?: string) => {
+    let base = buildEndpoint(baseUrl, space, domain, reference);
+    return version ? `${base}?version=${version}` : base;
 };
 
 const buildUiApiEndpoint = (baseUrl: string, space: string, domain: string, formName?: string) => {
@@ -105,14 +115,33 @@ export const DomainService = {
         }
     },
 
+    getVersionHistory: async (
+        baseUrl: string,
+        space: string,
+        domain: string,
+        reference: string,
+        authorization: { access_token: string }
+    ) => {
+        const endpoint = buildVersionEndpoint(baseUrl, space, domain, reference);
+
+        try {
+            const res = await httpGet(endpoint, buildHeaders(authorization));
+            return res.data;
+        } catch (err) {
+            handleError("GET", endpoint, err);
+            return null;
+        }
+    },
+
     getById: async (
         baseUrl: string,
         space: string,
         domain: string,
         id: string,
-        authorization: { access_token: string }
+        authorization: { access_token: string },
+        version?: string
     ) => {
-        const endpoint = buildEndpoint(baseUrl, space, domain, id);
+        const endpoint = buildGetByIdEndpoint(baseUrl, space, domain, id, version);
 
         try {
             const res = await httpGet(endpoint, buildHeaders(authorization));

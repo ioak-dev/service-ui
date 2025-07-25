@@ -3,3 +3,17 @@
     flex-direction: column;
     row-gap: 24px;
 }
+
+.serviceui-domainviewer__main__header {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 6px;
+}
+
+.serviceui-domainviewer__main__header__version {
+    background-color: var(--basicui-bg-accent);
+    /* border: 1px solid var(--basicui-bg-primary); */
+    display: inline-flex;
+    padding: 0 6px;
+    border-radius: 12px;
+}

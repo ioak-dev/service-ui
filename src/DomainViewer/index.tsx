@@ -4,9 +4,12 @@ import { DomainService } from "../service/DomainService";
 import DomainList from "../DomainList";
 import { composeActions } from "./ActionBuilder";
 import * as Service from "./service";
-import { FormAction } from "powerui/types/uispec.types";
+import { DomainVersion, FormAction } from "powerui/types/uispec.types";
 import { SpecDefinition } from "powerui/types/DynamicFormTypes";
 import "./style.css";
+import { getClassName } from "../utils/ClassNameUtils";
+import { ButtonVariantType, IconButton, SvgIcon } from "basicui";
+import VersionHistory from "./VersionHistory";
 
 export type DomainViewerProps = {
     apiBaseUrl: string;
@@ -15,6 +18,9 @@ export type DomainViewerProps = {
     reference: string;
     authorization: { isAuth: boolean, access_token: string };
 };
+
+
+const BASE_CLASS = "serviceui-domainviewer";
 
 /**
  * Component to present the given domain record and its related entities.
@@ -28,6 +34,8 @@ const DomainViewer = (props: DomainViewerProps) => {
     const [editMode, setEditMode] = useState(true);
     const [specDefinition, setSpecDefinition] = useState<SpecDefinition>();
     const [actions, setActions] = useState<ReactNode>();
+    const [activeVersion, setActiveVersion] = useState<string>();
+    const [versionList, setVersionList] = useState<DomainVersion[]>([]);
 
     useEffect(() => {
         stateRef.current = state;
@@ -80,18 +88,28 @@ const DomainViewer = (props: DomainViewerProps) => {
         }
     }, [props.authorization]);
 
-    const [saving, setSaving] = useState(false);
+    useEffect(() => {
+        if (props.authorization.isAuth && formSchema?.versioning) {
+            DomainService.getVersionHistory(props.apiBaseUrl, props.space, props.domain, props.reference, props.authorization).then((response) => {
+                setVersionList(response);
+            });
+        }
+    }, [props.authorization, data, formSchema])
 
     const handleChange = (e: Record<string, any>) => {
-        console.log(state);
         setState(e);
     }
 
-    const refreshData = () => {
-        DomainService.getById(props.apiBaseUrl, props.space, props.domain, props.reference, props.authorization).then((response) => {
+    const refreshData = (_activeVersion?: string) => {
+        let _version = _activeVersion;
+        if (!_version) {
+            _version = activeVersion
+        }
+        DomainService.getById(props.apiBaseUrl, props.space, props.domain, props.reference, props.authorization, _version).then((response) => {
             const _data: any = response;
             setState(_data);
             setData(_data);
+            setActiveVersion(response.__version);
         });
     }
 
@@ -123,13 +141,25 @@ const DomainViewer = (props: DomainViewerProps) => {
         return result != null ? String(result) : undefined;
     };
 
+    const handleVersionChange = (e: string) => {
+        refreshData(e);
+    }
+
     return (
         <>
-            <div className="serviceui-domainviewer">
-                <div className="serviceui-domainviewer__main">
-                    {formSchema?.header && <header>
-                        <h2>{getValue(formSchema?.header.title, data)}</h2>
-                        {formSchema?.header.subtitle && <p>{getValue(formSchema?.header.subtitle, data)}</p>}
+            <div className={BASE_CLASS}>
+                <div className={getClassName(BASE_CLASS, ["main"])}>
+                    {formSchema?.header && <header className={getClassName(BASE_CLASS, ["main", "header"])}>
+                        {formSchema.versioning && <VersionHistory
+                            activeVersion={activeVersion}
+                            versionList={versionList}
+                            onChange={handleVersionChange}
+                        />}
+                        <div>
+                            {formSchema.versioning && activeVersion && <div className={getClassName(BASE_CLASS, ["main", "header", "version"], [], "small")}>v{activeVersion}</div>}
+                            <h2>{getValue(formSchema?.header.title, data)}</h2>
+                            {formSchema?.header.subtitle && <p>{getValue(formSchema?.header.subtitle, data)}</p>}
+                        </div>
                     </header>}
                     <div>
                         {formSchema && <ConversationalForm
@@ -149,11 +179,10 @@ const DomainViewer = (props: DomainViewerProps) => {
                                 domain={child.domain}
                                 space={props.space}
                                 constraintFilters={{
-                                    [child.field.child]: data[child.field.parent]
+                                    [child.field.child]: props.reference
                                 }}
-                                parentDomain={props.domain}
                                 parentReference={props.reference}
-                                schema={child.listSchema}
+                                formSchemaId={child.formSchemaId}
                             />
                         </div>
                     ))}
