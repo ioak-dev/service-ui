@@ -10,6 +10,9 @@ type GenerateActionHandlerProps = {
 };
 
 const GenerateActionHandler = (props: GenerateActionHandlerProps) => {
+    if (!props.pendingAction || props.pendingAction.action.type !== "generate") {
+        return;
+    }
     const [loading, setLoading] = useState(false);
     const [state, setState] = useState<Record<string, string | number>>({});
 
