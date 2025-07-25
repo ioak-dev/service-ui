@@ -35,14 +35,18 @@ const buildAiApiEndpoint = (
     space: string,
     generationId: string,
     reference?: string,
-    parentReference?: string
+    parentReference?: string,
+    parentVersion?: string
 ) => {
     let base = `${baseUrl}${AI_API_PREFIX}/${space}/generate/${generationId}?`;
     if (reference) {
         base += `reference=${reference}&`;
     }
     if (parentReference) {
-        base += `parentReference=${parentReference}`;
+        base += `parentReference=${parentReference}&`;
+    }
+    if (parentVersion) {
+        base += `parentVersion=${parentVersion}`;
     }
     return base;
 };
@@ -232,11 +236,12 @@ export const DomainService = {
         generationId: string,
         reference?: string,
         parentReference?: string,
+        parentVersion?: string,
         payload: any,
         authorization: { access_token: string }
     }
     ) => {
-        const endpoint = buildAiApiEndpoint(params.baseUrl, params.space, params.generationId, params.reference, params.parentReference)
+        const endpoint = buildAiApiEndpoint(params.baseUrl, params.space, params.generationId, params.reference, params.parentReference, params.parentVersion)
 
         try {
             const res = await httpPost(endpoint, params.payload, buildHeaders(params.authorization));

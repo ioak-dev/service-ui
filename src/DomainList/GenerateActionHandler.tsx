@@ -15,6 +15,7 @@ const GenerateActionHandler = (props: GenerateActionHandlerProps) => {
 
     const onProceed = async () => {
         setLoading(true);
+        console.log(state, props.pendingAction);
         await props.onGenerate(state);
         setLoading(false);
     }

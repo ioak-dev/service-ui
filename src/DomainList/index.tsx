@@ -14,6 +14,7 @@ export type DomainListProps = {
     showSearch?: boolean;
     constraintFilters?: Record<string, any>;
     parentReference?: string;
+    parentVersion?: string;
     formSchemaId?: string;
 };
 
@@ -30,20 +31,30 @@ const DomainList = (props: DomainListProps) => {
     const [pendingAction, setPendingAction] = useState<{ action: FormAction, reference: string } | null>(null);
 
     const onActionClick = async (actionSchema: FormAction, payload: Record<string, string | number>) => {
-        const response = await Service.onActionClick(
-            props.apiBaseUrl,
-            props.space,
-            props.domain,
-            checkedItemsRef.current,
-            props.parentReference,
-            props.authorization,
-            actionSchema,
-            payload);
-        setCheckedItems([]);
-        handleSearch();
+
         switch (actionSchema.type) {
-            case "delete":
             case "generate":
+                // const response = await Service.onGenerate(
+                //     props.apiBaseUrl,
+                //     props.space,
+                //     props.domain,
+                //     checkedItemsRef.current,
+                //     props.parentReference,
+                //     props.authorization,
+                //     actionSchema,
+                //     payload);
+                const response = await Service.onGenerate(
+                    props.apiBaseUrl,
+                    props.space,
+                    actionSchema,
+                    undefined,
+                    props.parentReference,
+                    props.parentVersion,
+                    payload,
+                    props.authorization
+                )
+                setCheckedItems([]);
+                handleSearch();
                 break;
         }
     }
@@ -109,7 +120,6 @@ const DomainList = (props: DomainListProps) => {
         switch (e.type) {
             case "delete":
                 Service.onDelete(props.apiBaseUrl, props.space, props.domain, reference, props.authorization).then(response => {
-                    console.log(response);
                     handleSearch();
                 })
                 break;
@@ -123,10 +133,17 @@ const DomainList = (props: DomainListProps) => {
 
     const handleOnGenerate = async (e: Record<string, string | number>) => {
         if (pendingAction) {
-            Service.onGenerate(props.apiBaseUrl, props.space, pendingAction?.action, pendingAction?.reference, props.parentReference, e, props.authorization).then(response => {
-                handleSearch();
-                setPendingAction(null);
-            })
+            Service.onGenerate(props.apiBaseUrl,
+                props.space,
+                pendingAction?.action,
+                pendingAction?.reference,
+                props.parentReference,
+                props.parentVersion,
+                e,
+                props.authorization).then(response => {
+                    handleSearch();
+                    setPendingAction(null);
+                })
         }
     }
 

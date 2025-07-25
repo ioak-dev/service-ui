@@ -1,6 +1,25 @@
 import { FormAction } from "powerui/types/uispec.types";
 import { DomainService } from "../service/DomainService";
 
+export const onSave = async (
+    apiBaseUrl: string,
+    space: string,
+    domain: string,
+    reference: string,
+    payload: Record<string, any>,
+    authorization: { isAuth: boolean, access_token: string }) => {
+
+    const response = await DomainService.update(
+        apiBaseUrl,
+        space,
+        domain,
+        reference,
+        payload,
+        authorization
+    );
+    return response;
+}
+
 export const onDelete = async (
     apiBaseUrl: string,
     space: string,
@@ -22,8 +41,9 @@ export const onGenerate = async (
     apiBaseUrl: string,
     space: string,
     schema: FormAction,
-    reference: string,
+    reference: string | undefined,
     parentReference: string | undefined,
+    parentVersion: string | undefined,
     payload: Record<string, string | number>,
     authorization: { isAuth: boolean, access_token: string }) => {
 
@@ -35,6 +55,7 @@ export const onGenerate = async (
         space,
         reference,
         parentReference,
+        parentVersion,
         generationId: schema.generation?.id || "",
         payload,
         authorization

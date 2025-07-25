@@ -3,12 +3,11 @@ import { ConversationalFormTypes, ConversationalForm } from "powerui";
 import { DomainService } from "../service/DomainService";
 import DomainList from "../DomainList";
 import { composeActions } from "./ActionBuilder";
-import * as Service from "./service";
+import * as DomainListService from "../DomainList/service";
 import { DomainVersion, FormAction } from "powerui/types/uispec.types";
 import { SpecDefinition } from "powerui/types/DynamicFormTypes";
 import "./style.css";
 import { getClassName } from "../utils/ClassNameUtils";
-import { ButtonVariantType, IconButton, SvgIcon } from "basicui";
 import VersionHistory from "./VersionHistory";
 
 export type DomainViewerProps = {
@@ -31,8 +30,6 @@ const DomainViewer = (props: DomainViewerProps) => {
     const [data, setData] = useState<Record<string, any>>({});
     const dataRef = useRef<Record<string, any>>({});
     const [formSchema, setFormSchema] = useState<ConversationalFormTypes.FormSchema>();
-    const [editMode, setEditMode] = useState(true);
-    const [specDefinition, setSpecDefinition] = useState<SpecDefinition>();
     const [actions, setActions] = useState<ReactNode>();
     const [activeVersion, setActiveVersion] = useState<string>();
     const [versionList, setVersionList] = useState<DomainVersion[]>([]);
@@ -46,24 +43,36 @@ const DomainViewer = (props: DomainViewerProps) => {
     }, [data]);
 
     const onActionClick = async (actionSchema: FormAction, payload: Record<string, string | number>) => {
-        const response = await Service.onActionClick(
-            props.apiBaseUrl,
-            props.space,
-            props.domain,
-            props.reference,
-            props.authorization,
-            actionSchema,
-            payload,
-            stateRef.current)
         switch (actionSchema.type) {
             case "save":
+                const response = await DomainListService.onSave(
+                    props.apiBaseUrl,
+                    props.space,
+                    props.domain,
+                    props.reference,
+                    stateRef.current,
+                    props.authorization
+                );
                 setState(response);
                 setData(response);
+                console.log(response, formSchema?.versioning);
+                // if (formSchema?.versioning) {
+                    setActiveVersion(response.__version);
+                // }
                 break;
             case "reset":
                 setState({ ...dataRef.current });
                 break;
             case "generate":
+                await DomainListService.onGenerate(props.apiBaseUrl,
+                    props.space,
+                    actionSchema,
+                    props.reference,
+                    undefined,
+                    undefined,
+                    payload,
+                    props.authorization
+                );
                 refreshData();
         }
     }
@@ -78,10 +87,6 @@ const DomainViewer = (props: DomainViewerProps) => {
                 ));
                 setFormSchema(_data);
             });
-
-            DomainService.getMeta(props.apiBaseUrl, props.space, props.domain, props.authorization).then((response: SpecDefinition) => {
-                setSpecDefinition(response);
-            })
 
             refreshData();
 
@@ -182,6 +187,7 @@ const DomainViewer = (props: DomainViewerProps) => {
                                     [child.field.child]: props.reference
                                 }}
                                 parentReference={props.reference}
+                                parentVersion={activeVersion}
                                 formSchemaId={child.formSchemaId}
                             />
                         </div>
