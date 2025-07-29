@@ -5,7 +5,6 @@ import DomainList from "../DomainList";
 import { composeActions } from "./ActionBuilder";
 import * as DomainListService from "../DomainList/service";
 import { DomainVersion, FormAction } from "powerui/types/uispec.types";
-import { SpecDefinition } from "powerui/types/DynamicFormTypes";
 import "./style.css";
 import { getClassName } from "../utils/ClassNameUtils";
 import VersionHistory from "./VersionHistory";
@@ -57,7 +56,7 @@ const DomainViewer = (props: DomainViewerProps) => {
                 setData(response);
                 console.log(response, formSchema?.versioning);
                 // if (formSchema?.versioning) {
-                    setActiveVersion(response.__version);
+                setActiveVersion(response.__version);
                 // }
                 break;
             case "reset":
@@ -150,6 +149,76 @@ const DomainViewer = (props: DomainViewerProps) => {
         refreshData(e);
     }
 
+    const handleAssist = async (
+        assistantId: string,
+        text: string,
+        instruction: string,
+        {
+            onOpen,
+            onMessage,
+            onDone,
+            onError,
+        }: {
+            onOpen?: () => void;
+            onMessage: (msg: string) => void;
+            onDone?: () => void;
+            onError?: (err: any) => void;
+        }
+    ) => {
+        await DomainService.chat({
+            baseUrl: props.apiBaseUrl,
+            messages: [
+                {
+                    role: 'user',
+                    content: `${instruction} to this text: ${text}`,
+                },
+            ],
+            onOpen,
+            onMessage,
+            onDone,
+            onError,
+            authorization: props.authorization,
+            chatId: assistantId,
+            space: props.space
+        });
+    };
+
+
+    const handleAssistBkp = async (assistantId: string, text: string, instruction: string) => {
+        await DomainService.chat({
+            baseUrl: props.apiBaseUrl,
+            messages: [{ role: 'user', content: 'Need to rephrase or add more relevant description to this text: Harry’s journey from a timid, unsure boy to someone who faces Voldemort and other threats head-on illustrates personal bravery and moral courage."' }],
+            onOpen: () => {
+                console.log('[SSE] Stream opened.');
+                // setContent("")
+            },
+            onMessage: (msg: string) => {
+                try {
+                    const parsed = JSON.parse(msg);
+
+                    const delta = parsed?.choices?.[0]?.delta;
+
+                    if (delta?.role) {
+                        console.log(delta.role);
+                    }
+                    if (delta?.content) {
+                        // fullResponse += delta.content;
+                        // setContent(prev => prev + delta.content);
+                    }
+                } catch (err) {
+                    console.warn('Failed to parse chunk:', msg);
+                }
+            },
+            onDone: () => {
+                console.log('\n[SSE] Stream ended.');
+            },
+            onError: (err) => console.error('[SSE] Error:', err),
+            authorization: props.authorization,
+            chatId: assistantId,
+            space: props.space
+        })
+    }
+
     return (
         <>
             <div className={BASE_CLASS}>
@@ -172,6 +241,7 @@ const DomainViewer = (props: DomainViewerProps) => {
                             onChange={handleChange}
                             schema={formSchema}
                             actions={actions}
+                            onAssist={handleAssist}
                         />}
                     </div>
                 </div>

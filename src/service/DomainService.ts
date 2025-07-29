@@ -1,9 +1,11 @@
+import { AxiosRequestConfig } from "axios";
 import {
     httpGet,
     httpPost,
     httpPut,
     httpDelete,
     httpPatch,
+    axiosInstance,
 } from "./RestTemplate";
 
 const API_PREFIX = "/resources";
@@ -48,6 +50,15 @@ const buildAiApiEndpoint = (
     if (parentVersion) {
         base += `parentVersion=${parentVersion}`;
     }
+    return base;
+};
+
+const buildChatAiApiEndpoint = (
+    baseUrl: string,
+    space: string,
+    chatId: string,
+) => {
+    const base = `${baseUrl}${AI_API_PREFIX}/${space}/chat/${chatId}`;
     return base;
 };
 
@@ -249,6 +260,71 @@ export const DomainService = {
         } catch (err) {
             handleError("POST", endpoint, err);
             return null;
+        }
+    },
+
+    chat: async (params: {
+        baseUrl: string;
+        space: string;
+        chatId: string;
+        headers?: Record<string, string>;
+        messages?: any[];
+        authorization: { access_token: string };
+        onMessage: (message: string) => void;
+        onOpen?: () => void;
+        onError?: (err: any) => void;
+        onDone?: () => void;
+    }) => {
+        const endpoint = buildChatAiApiEndpoint(params.baseUrl, params.space, params.chatId);
+
+        try {
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    Authorization: params.authorization.access_token,
+                    'Content-Type': 'application/json',
+                    Accept: 'text/event-stream',
+                    ...params.headers,
+                },
+                body: JSON.stringify(params.messages),
+            });
+
+            if (!response.ok || !response.body) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+
+            params.onOpen?.();
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+
+            let buffer = '';
+
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+
+                const lines = buffer.split('\n');
+
+                buffer = lines.pop() || ''; // Keep incomplete line for next loop
+
+                for (const line of lines) {
+                    if (line.trim().startsWith('data:')) {
+                        const message = line.replace(/^data:\s*/, '');
+                        if (message === '[DONE]') {
+                            params.onDone?.();
+                            return;
+                        }
+                        params.onMessage(message);
+                    }
+                }
+            }
+
+            params.onDone?.();
+        } catch (err) {
+            params.onError?.(err);
         }
     },
 
